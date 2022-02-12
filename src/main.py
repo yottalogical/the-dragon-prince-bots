@@ -11,7 +11,7 @@ mutex = threading.Lock()
 
 
 def main():
-    config: list[dict[str, typing.Union[str, list[str]]]] \
+    config: list[dict[str, typing.Union[str, list[str], float]]] \
         = json.load(open('config.json'))
 
     for bot in config:
@@ -19,14 +19,16 @@ def main():
             bot['username'],
             bot['subreddit_names'],
             bot['trigger_words'],
+            bot['response_rate'],
             bot['responses']
         )
 
 
 class Bot:
-    def __init__(self, username: str, subreddit_names: list[str], trigger_words: list[str], responses: list[str]):
+    def __init__(self, username: str, subreddit_names: list[str], trigger_words: list[str], response_rate: float, responses: list[str]):
         self.username = username
         self.trigger_words = trigger_words
+        self.response_rate = response_rate
         self.responses = responses
 
         for subreddit_name in subreddit_names:
@@ -58,8 +60,10 @@ class Bot:
                     print('My own submission')
                 elif already_replied(submission, reddit):
                     print('Already replied to submission')
+                elif self.randomly_skip():
+                    print('Randomly skipping this submission')
                 else:
-                    print('Triggering submission')
+                    print('Replying to submission')
                     self.reply_to(submission)
 
     def stream_comments(self, subreddit_name: str):
@@ -80,8 +84,10 @@ class Bot:
                     print('My own comment')
                 elif already_replied(comment, reddit):
                     print('Already replied to comment')
+                elif self.randomly_skip():
+                    print('Randomly skipping this comment')
                 else:
-                    print('Triggering comment')
+                    print('Replying to comment')
                     self.reply_to(comment)
 
     def trigger(self, input: str):
@@ -96,6 +102,9 @@ class Bot:
             item.reply(random.choice(self.responses))
         except praw.exceptions.APIException as e:
             print(f'APIException: {e}')
+
+    def randomly_skip(self):
+        return random.random() > self.response_rate
 
 
 def already_replied(item: typing.Union[praw.models.Submission, praw.models.Comment], reddit: praw.Reddit) -> bool:

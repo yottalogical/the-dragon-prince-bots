@@ -7,6 +7,7 @@
         "trigger_words": [
             "Aaravos"
         ],
+        "response_rate": 0.25,
         "responses": [
             "Speak. Speak, so I can hear you.",
             "Ah… How long I have waited to hear the sound of another voice. How may I serve you?",
