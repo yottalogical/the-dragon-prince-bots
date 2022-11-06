@@ -5,6 +5,8 @@ import json
 import threading
 import random
 import praw
+import praw.models
+import praw.exceptions
 
 
 mutex = threading.Lock()
@@ -50,17 +52,22 @@ class Bot:
             print(f'Streaming submissions from r/{subreddit_name}')
 
         for submission in reddit.subreddit(subreddit_name).stream.submissions():
+            submission: praw.models.Submission
+
             with mutex:
                 print(f'\n{self.username}')
                 print(f'https://www.reddit.com{submission.permalink}')
 
-                if not (self.trigger(submission.title) or self.trigger(submission.selftext)):
+                triggering = self.has_trigger_word(submission.title) \
+                    or self.has_trigger_word(submission.selftext)
+
+                if not triggering:
                     print('Non-triggering submission')
                 elif submission.author == reddit.user.me():
                     print('My own submission')
                 elif already_replied(submission, reddit):
                     print('Already replied to submission')
-                elif self.randomly_skip():
+                elif self.randomly_skip(False):
                     print('Randomly skipping this submission')
                 else:
                     print('Replying to submission')
@@ -74,23 +81,29 @@ class Bot:
             print(f'Streaming comments from r/{subreddit_name}')
 
         for comment in reddit.subreddit(subreddit_name).stream.comments():
+            comment: praw.models.Comment
+
             with mutex:
                 print(f'\n{self.username}')
                 print(f'https://www.reddit.com{comment.permalink}')
 
-                if not self.trigger(comment.body):
+                is_a_reply_to_me = replying_to_me(comment, reddit)
+                triggering = self.has_trigger_word(comment.body) \
+                    or is_a_reply_to_me
+
+                if not triggering:
                     print('Non-triggering comment')
                 elif comment.author == reddit.user.me():
                     print('My own comment')
                 elif already_replied(comment, reddit):
                     print('Already replied to comment')
-                elif self.randomly_skip():
+                elif self.randomly_skip(is_a_reply_to_me):
                     print('Randomly skipping this comment')
                 else:
                     print('Replying to comment')
                     self.reply_to(comment)
 
-    def trigger(self, input: str):
+    def has_trigger_word(self, input: str):
         for trigger_word in self.trigger_words:
             if trigger_word.casefold() in input.casefold():
                 return True
@@ -99,12 +112,16 @@ class Bot:
 
     def reply_to(self, item: typing.Union[praw.models.Submission, praw.models.Comment]):
         try:
-            item.reply(random.choice(self.responses))
+            item.reply(body=random.choice(self.responses))
         except praw.exceptions.APIException as e:
             print(f'APIException: {e}')
 
-    def randomly_skip(self):
-        return random.random() > self.response_rate
+    def randomly_skip(self, is_a_reply_to_me: bool):
+        return (not is_a_reply_to_me) and random.random() > self.response_rate
+
+
+def replying_to_me(comment: praw.models.Comment, reddit: praw.Reddit) -> bool:
+    return comment.parent().author == reddit.user.me()
 
 
 def already_replied(item: typing.Union[praw.models.Submission, praw.models.Comment], reddit: praw.Reddit) -> bool:
