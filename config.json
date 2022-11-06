@@ -5,7 +5,10 @@
             "TheDragonPrince"
         ],
         "trigger_words": [
-            "Aaravos"
+            "Aaravos",
+            "Fallen Star",
+            "bug-pal",
+            "bug pal"
         ],
         "response_rate": 0.25,
         "responses": [
@@ -35,7 +38,7 @@
             "Your arrogance is *so* predictable. You allowed my vessel to walk right into your court, and then you brought him directly to the source of all your power? Oh, the irony is wonderful! You're just like your grandmother.",
             "Would you like to know the truth of her fate… before you face yours?",
             "When you capture the dragonling, I will show you how to take his power, how to imbue yourself with all his magic and potential, so that you will transcend the limits of your human form. Then none will dare stand against you.",
-            "Rewop ruoy swollaws eh. Dnim ruoy swollaws eh. Traeh uoy swollaws eh."
+            "Rewop ruoy swollaws eh. Dnim ruoy swollaws eh. Traeh ruoy swollaws eh."
         ]
     }
 ]
